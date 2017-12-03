@@ -34,6 +34,7 @@ class student:
         self.hypclasses = []
         self.upcount = 0
         self.grubmsg = ""
+        self.categories = {}
         return
 
     def getMP1Grades(self):
@@ -138,6 +139,14 @@ def login_auth():
     stu.getClasses()
     stu.getAssignments()
     stu.getClassWeights()
+    #setup categories for each class
+    for i in stu.classweights.keys():
+        stu.categories[i] = []
+        for b in stu.classweights[i]:
+            if len(b)==0:
+                continue
+            stu.categories[i].append(b["Description"])
+    print(stu.categories)
 
     dic = stu.classgrades
 
@@ -288,9 +297,15 @@ def classes():
                 upcomingtoput += classtemplate3.format(head=data[0] + " | " + data[1], rows=temp, grade="Priority: " + str(ret[0]), id=i, message=ret[1])
             except Exception as e:
                 print(e)
-
+    catdropdowntoput = ""
+    alreadydone = []
+    for i in stu.categories.keys():
+        for b in stu.categories[i]:
+            if b not in alreadydone:
+                catdropdowntoput += categorydroptemp.format(b, b)
+                alreadydone.append(b)
         
-    return flask.render_template("main.html", grub=stu.grubmsg, classesdrop=classdropdown, missingwork=missingtoput, grades=gradestoput, studentid=stu.studentnum, upcomingwork=upcomingtoput)
+    return flask.render_template("main.html", categorydrop=catdropdowntoput, grub=stu.grubmsg, classesdrop=classdropdown, missingwork=missingtoput, grades=gradestoput, studentid=stu.studentnum, upcomingwork=upcomingtoput)
 
 def create_grub(classname):
     stu = session['stu']

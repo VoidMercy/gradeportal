@@ -149,3 +149,5 @@ row3 = """<tr>
 
 buttontemp = """<button type="button" class="btn btn-danger btn-sm pull-right" id="{}" onclick="remove_assignment('{}')">remove</button>"""
 buttontemp2 = """<button type="button" class="btn btn-danger btn-sm pull-right" id="{}" onclick="remove_upcoming('{}')">remove</button>"""
+
+categorydroptemp = """<option value="{}">{}</option>"""
