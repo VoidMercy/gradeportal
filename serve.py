@@ -265,6 +265,10 @@ row3 = """<tr>
 buttontemp = """<button type="button" class="btn btn-danger btn-sm pull-right" id="{}" onclick="remove_assignment('{}')">remove</button>"""
 buttontemp2 = """<button type="button" class="btn btn-danger btn-sm pull-right" id="{}" onclick="remove_upcoming('{}')">remove</button>"""
 
+@app.route('/login')
+def login_func():
+    return flask.render_template("login.html")
+
 @app.route('/class')
 def classes():
     
@@ -379,7 +383,7 @@ def classes():
             c += 1
 
         
-    return flask.render_template("testshiet.html", grub=stu.grubmsg, classesdrop=classdropdown, missingwork=missingtoput, grades=gradestoput, studentid=stu.studentnum, upcomingwork=upcomingtoput)
+    return flask.render_template("main.html", grub=stu.grubmsg, classesdrop=classdropdown, missingwork=missingtoput, grades=gradestoput, studentid=stu.studentnum, upcomingwork=upcomingtoput)
 
 def create_grub(classname):
     info = 0
