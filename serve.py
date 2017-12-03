@@ -101,7 +101,7 @@ class student:
             try:
                 if c['courseName'] == 'COUNSELOR' or c['courseName'] == 'HOMEROOM':
                     continue
-                self.classgrades[c['courseName']] = self.getClassWeight(c['sectionid'])
+                self.classweights[c['courseName']] = self.getClassWeight(c['sectionid'])
             except:
                 pass
 
