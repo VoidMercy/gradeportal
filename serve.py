@@ -1,4 +1,4 @@
-from flask import Flask, url_for
+from flask import Flask, url_for, redirect
 
 import requests, json, copy, dateparser, datetime, math
 from html import escape
@@ -117,7 +117,9 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return "Login"
+    if 'stu' in globals() and stu.authenticated:
+        return redirect(url_for('classes'))
+    return redirect(url_for('login_func'))
 
 @app.route('/login')
 def login_func():
