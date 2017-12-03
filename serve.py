@@ -28,6 +28,7 @@ class student:
         self.studentnum = None
         self.studentid = None
         self.classes = None
+        self.classweights = None
         self.authenticated = False
         self.classgrades = {} 
         self.hypclasses = []
@@ -90,6 +91,19 @@ class student:
                 pass
         #print(self.classgrades)
 
+    def getClassWeight(self, secid, termid="MP2"):
+        baselink = 'https://portal.mcpsmd.org/guardian/prefs/assignmentGrade_CategoryDetail.json?secid=%s&student_number=%s&schoolid=%s&termid=%s'%(secid, self.studentnum, self.schoolid, termid)
+        cw = self.s.get(baselink)
+        return json.loads(cw.text)
+
+    def getClassWeights(self):
+        for c in self.classes:
+            try:
+                if c['courseName'] == 'COUNSELOR' or c['courseName'] == 'HOMEROOM':
+                    continue
+                self.classgrades[c['courseName']] = self.getClassWeight(c['sectionid'])
+            except:
+                pass
 
 app = Flask(__name__)
 SESSION_TYPE = 'filesystem'
@@ -122,6 +136,7 @@ def login_auth():
     stu.authenticate(username, password)
     stu.getClasses()
     stu.getAssignments()
+    stu.getClassWeights()
 
     dic = stu.classgrades
 
