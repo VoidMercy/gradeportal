@@ -6,8 +6,12 @@ from lxml import html
 import hmac, base64, hashlib
 import re, flask
 import json
+# html templates
+from html_templates import *
+
 #Enter your own username and password for portal.mcpsmd.org
 from config import *
+
 
 def hash(password,contextdata):
     return hmac.new(contextdata.encode('ascii'), base64.b64encode(hashlib.md5(password.encode('ascii')).digest()).replace(b"=", b""), hashlib.md5).hexdigest()
@@ -21,6 +25,7 @@ class student:
         self.studentnum = None
         self.studentid = None
         self.classes = None
+        self.authenticated = False
         self.classgrades = {} 
         self.hypclasses = []
         self.upcount = 0
@@ -57,6 +62,7 @@ class student:
         self.schoolid = re.findall("root.schoolId = parseInt\('(.*)'\);", content)[0]
         self.studentid = re.findall("root.studentId = parseInt\('(.*)'\);", content)[0]
         self.studentnum = re.findall("root.studentNumber = parseInt\('(.*)'\);", content)[0]
+        self.authenticated = True
         return
 
     def getClasses(self):
@@ -113,165 +119,16 @@ app = Flask(__name__)
 def index():
     return "Login"
 
-classtemplate = """<!-- Accordion card -->
-    <div class="card">
-
-        <!-- Card header -->
-        <div class="card-header" role="tab" id="headingOne">
-            <a class="collapsed" data-toggle="collapse" data-parent="#accordionEx" href="#g{id}" aria-expanded="true" aria-controls="g{id}">
-                <h5 class="mb-0">
-                    {head} <i class="fa fa-angle-down rotate-icon"></i> <span class="pull-right pr-3" id="{classnamegrade}">{grade}</span>
-                </h5>
-            </a>
-        </div>
-
-        <!-- Card body -->
-        <div id="g{id}" class="collapse" role="tabpanel" aria-labelledby="headingOne">
-            <div class="card-body">
-    
-<table class="table" id="categories">
-  <thead>
-    <tr>
-      <th scope="col">Category</th>
-      <th scope="col">Weight</th>
-      <th scope="col">Points/Max Points</th>
-      <th scope="col">Grade</th>
-    </tr>
-  </thead>
-  <tbody>
-  {cats}
-  </tbody>
-</table>
-            
-                <table class="table" id="{classnametable}">
-  <thead>
-    <tr>
-      <th scope="col">Assignment Name</th>
-      <th scope="col">Category</th>
-      <th scope="col">Due Date</th>
-      <th scope="col">Points</th>
-      <th scope="col">Possible</th>
-    </tr>
-  </thead>
-  <tbody>
-  {rows}
-  </tbody>
-</table>
-
-
-<button type="button" class="btn btn-deep-purple pull-right pt" onclick="calc_grade('{classnametable}','{classnamegrade}')">recalculate</button>
-            </div>
-        </div>
-    </div>
-    <!-- Accordion card -->"""
-
-classtemplate2 = """<!-- Accordion card -->
-    <div class="card">
-
-        <!-- Card header -->
-        <div class="card-header" role="tab" id="headingOne">
-            <a class="collapsed" data-toggle="collapse" data-parent="#accordionEx" href="#m{id}" aria-expanded="true" aria-controls="m{id}">
-                <h5 class="mb-0">
-                    {head} <i class="fa fa-angle-down rotate-icon"></i> <span class="pull-right pr-3">{grade}</span>
-                </h5>
-            </a>
-        </div>
-
-        <!-- Card body -->
-        <div id="m{id}" class="collapse" role="tabpanel" aria-labelledby="headingOne">
-            <div class="card-body">
-                <table class="table">
-  <thead>
-    <tr>
-      <th scope="col">Category</th>
-      <th scope="col">Due Date</th>
-      <th scope="col">Points</th>
-      <th scope="col">Possible</th>
-    </tr>
-  </thead>
-  <tbody>
-  {rows}
-  </tbody>
-</table>
-            </div>
-        </div>
-    </div>
-    <!-- Accordion card -->"""
-
-classtemplate3 = """<!-- Accordion card -->
-    <div class="card">
-
-        <!-- Card header -->
-        <div class="card-header" role="tab" id="headingOne">
-            <a class="collapsed" data-toggle="collapse" data-parent="#accordionEx" href="#up{id}" aria-expanded="true" aria-controls="up{id}">
-                <h5 class="mb-0">
-                    {head} <i class="fa fa-angle-down rotate-icon"></i> <span class="pull-right pr-3">{grade}</span>
-                </h5>
-            </a>
-        </div>
-
-        <!-- Card body -->
-        <div id="up{id}" class="collapse" role="tabpanel" aria-labelledby="headingOne">
-            <div class="card-body">
-                <table class="table">
-  <thead>
-    <tr>
-      <th scope="col">Category</th>
-      <th scope="col">Due Date</th>
-      <th scope="col">Possible</th>
-    </tr>
-  </thead>
-  <tbody>
-  {rows}
-  </tbody>
-</table>
-{message}
-            </div>
-        </div>
-    </div>
-    <!-- Accordion card -->"""
-
-
-
-row = """<tr>
-      <th scope="row">{}</th>
-      <td>{}</td>
-      <td>{}</td>
-      <td>{}</td>
-      <td>{}</td>
-    </tr>"""
-row = """<tr>
-      <th scope="row">{}</th>
-      <td>{}</td>
-      <td>{}</td>
-      <td><input type="text" id="assignmentname" value="{}"></td>
-      <td>{}</td>
-    </tr>"""
-
-
-row2 = """<tr>
-      <th scope="row">{}</th>
-      <td>{}</td>
-      <td>{}</td>
-      <td>{}</td>
-    </tr>"""
-
-row3 = """<tr>
-      <th scope="row">{}</th>
-      <td>{}</td>
-      <td>{}</td>
-    </tr>"""
-
-buttontemp = """<button type="button" class="btn btn-danger btn-sm pull-right" id="{}" onclick="remove_assignment('{}')">remove</button>"""
-buttontemp2 = """<button type="button" class="btn btn-danger btn-sm pull-right" id="{}" onclick="remove_upcoming('{}')">remove</button>"""
-
 @app.route('/login')
 def login_func():
     return flask.render_template("login.html")
 
 @app.route('/class')
 def classes():
-    
+    # if student is not authenticated
+    if 'stu' not in globals() or not stu.authenticated:
+        # they aren't
+        return redirect(url_for('login_func'))
     gradestoput = ""
     missingtoput = ""
     upcomingtoput = ""
