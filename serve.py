@@ -28,7 +28,7 @@ class student:
         self.studentnum = None
         self.studentid = None
         self.classes = None
-        self.classweights = None
+        self.classweights = {}
         self.authenticated = False
         self.classgrades = {} 
         self.hypclasses = []
@@ -102,7 +102,8 @@ class student:
                 if c['courseName'] == 'COUNSELOR' or c['courseName'] == 'HOMEROOM':
                     continue
                 self.classweights[c['courseName']] = self.getClassWeight(c['sectionid'])
-            except:
+            except Exception as e:
+                print(e)
                 pass
 
 app = Flask(__name__)
