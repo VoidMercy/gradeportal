@@ -3,3 +3,6 @@ config.py
 flasksession/
 flasksession/*
 *.txt
+__pycache__
+__pycache__/*
+data/*.json

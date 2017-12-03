@@ -7,6 +7,8 @@ from lxml import html
 import hmac, base64, hashlib
 import re, flask
 import json
+import os.path
+from os import makedirs
 # html templates
 from html_templates import *
 
@@ -249,22 +251,23 @@ def classes():
         counter += 1
 
 
+    if os.path.exists('data/'+str(stu.studentnum) + ".json"):
+        with open('data/' + str(stu.studentnum) + ".json") as f:
+            assigns = json.load(f)
+    else:
+        makedirs(os.path.dirname('data/'+str(stu.studentnum) + ".json"), exist_ok=True)
+        tmp = open('data/'+str(stu.studentnum) + ".json", "w")
+        tmp.write('{}')
+        tmp.close()
+        assigns = {}
 
-    #creating upcoming assignments
-    try:
-        assigns = open(str(stu.studentnum) + ".txt", "r").read()
-    except:
-        assigns = open(str(stu.studentnum) + ".txt", "w")
-        assigns.close()
-        assigns = open(str(stu.studentnum) + ".txt", "r").read()
-    c = 1
+
     if len(assigns) > 0:
-        for i in assigns.strip().split("\n"):
-            data = i.split("|||")
+        for i in assigns:
+            data = [assigns[i]['classname'],assigns[i]['title'],assigns[i]['category'],assigns[i]['date'],assigns[i]['points'],i]
             temp = row3.format(data[2] + " " + buttontemp2.format(data[5], data[5]), data[3], data[4])
             ret = calc_prio(data)
-            upcomingtoput += classtemplate3.format(head=data[0] + " | " + data[1], rows=temp, grade="Priority: " + str(ret[0]), id=str(c), message=ret[1])
-            c += 1
+            upcomingtoput += classtemplate3.format(head=data[0] + " | " + data[1], rows=temp, grade="Priority: " + str(ret[0]), id=i, message=ret[1])
 
         
     return flask.render_template("main.html", grub=stu.grubmsg, classesdrop=classdropdown, missingwork=missingtoput, grades=gradestoput, studentid=stu.studentnum, upcomingwork=upcomingtoput)
@@ -342,8 +345,8 @@ def create_grub(classname):
     <div class="form-group basic-textarea">
       <label for="grubtext">Send this email to %s:</label>
       <textarea class="form-control" id="grubtext" rows="10" style="height:auto;">"""%(email)
-    r += "Dear %s,\n\nI was just checking portal today and I noticed that I have a %s in your class."%(tname,currentgrade) + \
-    " As you know, this grade is only %s percent away from %s. I was wondering if it would be possible for you to bump up my grade? "%(away, calcletter(math.ceil(currentgrade/10.0)*10.0))
+    r += "Dear %s,\n\nI was just checking portal today and I noticed that I have a %s in your class."%(tname,round(currentgrade,2)) + \
+    " As you know, this grade is only %s percent away from %s. I was wondering if it would be possible for you to bump up my grade? "%(round(away,2), calcletter(math.ceil(currentgrade/10.0)*10.0))
     r += "I have been demonstrating high amounts of effort in your class, which can be seen in how I got %s on the '%s' assignment. I would really appreciate it if you could consider this.\n\n"%(calcletter(bestgrade), bestassignment)
     r += "Thanks, and have a great day!\n%s</textarea></div></div>"%(studentname)
     print(r)
@@ -528,14 +531,12 @@ def post_handler():
 
     if "removeupcoming" in data:
         toremove = data["id"]
-        fi = open(str(stu.studentnum) + ".txt", "r").read().split("\n")
-        for a in range(len(fi)):
-            if fi[a].endswith(toremove):
-                del fi[a]
-                break
-        fo = open(str(stu.studentnum) + ".txt", "w")
-        fo.write("\n".join(fi))
-        fo.close()
+        jd = {}
+        with open('data/' + str(stu.studentnum) + ".json") as f:
+            jd = json.load(f)
+        jd.pop(toremove)
+        with open('data/' + str(stu.studentnum) + ".json", 'w') as f:
+            json.dump(jd, f)
 
     if "removegrade" in data:
         toremove = data["id"]
@@ -547,13 +548,17 @@ def post_handler():
     
     if "classname" in data:
     #ImmutableMultiDict([('title', 'title'), ('classname', 'AP CHEMSTRY DP A'), ('category', 'Homework (10)'), ('date', '2017-12-02'), ('points', '69points')])
-    
-        towrite = "{}|||{}|||{}|||{}|||{}|||{}".format(data["classname"], data["title"], data["category"], data["date"], data["points"], "grades" + str(stu.upcount))
-        stu.upcount += 1
-        fo = open(str(stu.studentnum) + ".txt", "a")
-        fo.write(towrite + "\n")
-        fo.close()
-        fo = open(str(stu.studentnum) + ".txt", "r")
+
+        with open('data/' + str(stu.studentnum) + ".json") as f:
+            jd = json.load(f)
+
+        # this won't allow two identical upcoming assignments, but that's fine
+        itemid = hashlib.sha256((data["classname"]+data['title']+data['category']+data['date']+data['points']).encode('utf-8')).hexdigest()
+        jd[itemid] = {'classname':data["classname"], 'title':data['title'], 'category':data['category'], 'date':data['date'], 'points':data['points']}
+        
+        with open('data/'+str(stu.studentnum) + ".json", 'w') as outfile:  
+            json.dump(jd, outfile)
+
     elif "classname2" in data:
         #ImmutableMultiDict([('category2', 'Summative (50)'), ('points2', '5'), ('possible2', '6'), ('date2', '2017-12-02'), ('title2', 'Test Assignment'), ('classname2', 'AP CHEMSTRY DP A')])
         
