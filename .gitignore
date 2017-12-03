@@ -1,7 +1,7 @@
 config.py
 *.pyc
-flasksession/
-flasksession/*
+flask_session/
+flask_session/*
 *.txt
 __pycache__
 __pycache__/*

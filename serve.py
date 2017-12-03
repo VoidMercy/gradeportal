@@ -264,10 +264,14 @@ def classes():
 
     if len(assigns) > 0:
         for i in assigns:
-            data = [assigns[i]['classname'],assigns[i]['title'],assigns[i]['category'],assigns[i]['date'],assigns[i]['points'],i]
-            temp = row3.format(data[2] + " " + buttontemp2.format(data[5], data[5]), data[3], data[4])
-            ret = calc_prio(data)
-            upcomingtoput += classtemplate3.format(head=data[0] + " | " + data[1], rows=temp, grade="Priority: " + str(ret[0]), id=i, message=ret[1])
+            try:
+                # if they put invalid data or something
+                data = [assigns[i]['classname'],assigns[i]['title'],assigns[i]['category'],assigns[i]['date'],assigns[i]['points'],i]
+                temp = row3.format(data[2] + " " + buttontemp2.format(data[5], data[5]), data[3], data[4])
+                ret = calc_prio(data)
+                upcomingtoput += classtemplate3.format(head=data[0] + " | " + data[1], rows=temp, grade="Priority: " + str(ret[0]), id=i, message=ret[1])
+            except Exception as e:
+                print(e)
 
         
     return flask.render_template("main.html", grub=stu.grubmsg, classesdrop=classdropdown, missingwork=missingtoput, grades=gradestoput, studentid=stu.studentnum, upcomingwork=upcomingtoput)
