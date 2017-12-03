@@ -1,5 +1,5 @@
 from flask import Flask, url_for, redirect, session
-from flask.ext.session import Session
+from flask_session import Session
 
 import requests, json, copy, dateparser, datetime, math
 from html import escape
