@@ -11,18 +11,18 @@
 <div class="py-4"></div>
 <div class="card mx-4">
 <div class="card-body">
-<form>
+<form action="/login" method="POST">
     <p class="h5 text-center mb-4">Sign in</p>
 
     <div class="md-form">
         <i class="fa fa-user prefix grey-text"></i>
-        <input type="text" id="defaultForm-email" class="form-control">
-        <label for="defaultForm-email" class="active">Student ID</label>
+        <input type="text" id="defaultForm-text" class="form-control" name="uname">
+        <label for="defaultForm-text" class="active">Student ID</label>
     </div>
 
     <div class="md-form">
         <i class="fa fa-lock prefix grey-text"></i>
-        <input type="password" id="defaultForm-pass" class="form-control">
+        <input type="password" id="defaultForm-pass" class="form-control" name="pass">
         <label for="defaultForm-pass" class="active">Password</label>
     </div>
 

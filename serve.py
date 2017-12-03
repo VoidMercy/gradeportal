@@ -1,4 +1,5 @@
-from flask import Flask, url_for, redirect
+from flask import Flask, url_for, redirect, session
+from flask.ext.session import Session
 
 import requests, json, copy, dateparser, datetime, math
 from html import escape
@@ -10,7 +11,7 @@ import json
 from html_templates import *
 
 #Enter your own username and password for portal.mcpsmd.org
-from config import *
+#from config import *
 
 
 def hash(password,contextdata):
@@ -88,32 +89,10 @@ class student:
         #print(self.classgrades)
 
 
-stu = student()
-stu.authenticate(username, pw)
-stu.getClasses()
-stu.getAssignments()
-
-dic = stu.classgrades
-
-#mapping period to class
-classmap = {}
-for a in dic.keys():
-    period = '??' + a
-    for c in stu.classes:
-        try:
-            if c['courseName']==a and c['termid']=='MP2':
-                period = c['period']
-                break
-        except:
-            pass
-    
-    classmap[period] = a
-print (classmap)
-order = list(classmap.keys())
-order.sort()
-
-
 app = Flask(__name__)
+SESSION_TYPE = 'filesystem'
+app.config.from_object(__name__)
+Session(app)
 
 @app.route('/')
 def index():
@@ -125,12 +104,58 @@ def index():
 def login_func():
     return flask.render_template("login.html")
 
+@app.route('/login', methods=['POST'])
+def login_auth():
+    data = (flask.request.form)
+    if 'uname' not in data or 'pass' not in data:
+        # malformed
+        return redirect(url_for('login_func'))
+
+
+    username = data['uname']
+    password = data['pass']
+    # attempt to connect
+
+    stu = student()
+    stu.authenticate(username, password)
+    stu.getClasses()
+    stu.getAssignments()
+
+    dic = stu.classgrades
+
+    #mapping period to class
+    classmap = {}
+    for a in dic.keys():
+        period = '??' + a
+        for c in stu.classes:
+            try:
+                if c['courseName']==a and c['termid']=='MP2':
+                    period = c['period']
+                    break
+            except:
+                pass
+        
+        classmap[period] = a
+    print (classmap)
+    order = list(classmap.keys())
+    order.sort()
+    session['stu'] = stu
+    session['classmap'] = classmap
+    session['order'] = order
+    session['dic'] = dic
+    return redirect(url_for('classes'))
+
+
 @app.route('/class')
 def classes():
     # if student is not authenticated
-    if 'stu' not in globals() or not stu.authenticated:
+    if 'stu' not in session or not session['stu'].authenticated:
         # they aren't
         return redirect(url_for('login_func'))
+    stu = session['stu']
+    classmap = session['classmap']
+    order = session['order']
+    dic = session['dic']
     gradestoput = ""
     missingtoput = ""
     upcomingtoput = ""
@@ -245,6 +270,10 @@ def classes():
     return flask.render_template("main.html", grub=stu.grubmsg, classesdrop=classdropdown, missingwork=missingtoput, grades=gradestoput, studentid=stu.studentnum, upcomingwork=upcomingtoput)
 
 def create_grub(classname):
+    stu = session['stu']
+    classmap = session['classmap']
+    order = session['order']
+    dic = session['dic']
     info = 0
     for num in order:
         
@@ -320,11 +349,12 @@ def create_grub(classname):
     print(r)
     return r
 
-    
-    
-
 def calc_prio(data):
-    
+    stu = session['stu']
+    classmap = session['classmap']
+    order = session['order']
+    dic = session['dic']
+
     classname = data[0]
     info = 0
     for num in order:
@@ -456,9 +486,11 @@ def calc_prio(data):
     ret = [prio, "<p>" + text1 + "<br>" + text2 + "<br>" + text3 + "<br><br>" + text4 + "<br><br>" + text5 + "<br><br>" + text6 + "</p>"]
     return ret
 
-    
-
 def calculate_grade(weights):
+    stu = session['stu']
+    classmap = session['classmap']
+    order = session['order']
+    dic = session['dic']
     #print(weights)
     final_grade = 0.0
     total_weight = 0.0
@@ -484,6 +516,14 @@ def calculate_grade(weights):
 
 @app.route('/class', methods=['POST'])
 def post_handler():
+    # if student is not authenticated
+    if 'stu' not in session or not session['stu'].authenticated:
+        # they aren't
+        return redirect(url_for('login_func'))
+    stu = session['stu']
+    classmap = session['classmap']
+    order = session['order']
+    dic = session['dic']
     data = (flask.request.form)
 
     if "removeupcoming" in data:
@@ -526,6 +566,11 @@ def post_handler():
         print("SDFDSFDSF")
         print(stu.grubmsg)
     return classes()
+
+@app.route('/logout')
+def logout_handler():
+    session.clear()
+    return redirect(url_for('login_auth'))
 
 if __name__ == '__main__':
     app.run()
