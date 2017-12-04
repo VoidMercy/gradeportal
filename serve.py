@@ -208,12 +208,11 @@ def classes():
         misstoput = ""
         weights = {} #category name : [tuple of points + possible]
         #Iterate through each assignment
-        hypid = 0
         for a in info:
             if len(a.keys()) == 0:
                 continue
-            if "hyp" in a:
-                names.append(a["Description"] + " " + buttontemp.format(a["hyp"],a["hyp"]))
+            if "hyp_id" in a:
+                names.append(a["Description"] + " " + buttontemp.format(a["hyp_id"],a["hyp_id"]))
             else:
                 names.append(a["Description"])
             category.append(a["AssignmentType"])
@@ -583,7 +582,7 @@ def post_handler():
     if "removegrade" in data:
         toremove = data["id"]
         for i in range(len(stu.hypclasses)):
-            if stu.hypclasses[i][1]["hyp"] == toremove:
+            if stu.hypclasses[i][1]["hyp_id"] == toremove:
                 del stu.hypclasses[i]
                 break
         
@@ -603,8 +602,8 @@ def post_handler():
 
     elif "classname2" in data:
         #ImmutableMultiDict([('category2', 'Summative (50)'), ('points2', '5'), ('possible2', '6'), ('date2', '2017-12-02'), ('title2', 'Test Assignment'), ('classname2', 'AP CHEMSTRY DP A')])
-        
-        info = {"hyp" : ("remove" + str(len(stu.hypclasses))), "Description":data["title2"], "AssignmentType":data["category2"], "DueDate":(str(data["date2"])+" 00:00:00.0"), "Points":str(float(data["points2"])), "Possible":data["possible2"]}
+        id = data["title2"]+data["category2"]+str(data["date2"]) + str(float(data["points2"]))+data["possible2"]
+        info = {"hyp_id" : hashlib.sha256(id.encode('utf-8')), "Description":data["title2"], "AssignmentType":data["category2"], "DueDate":(str(data["date2"])+" 00:00:00.0"), "Points":str(float(data["points2"])), "Possible":data["possible2"]}
         stu.hypclasses.append((data["classname2"], info))
         
     elif "classnamememe" in data:
