@@ -151,3 +151,23 @@ buttontemp = """<button type="button" class="btn btn-danger btn-sm pull-right" i
 buttontemp2 = """<button type="button" class="btn btn-danger btn-sm pull-right" id="{}" onclick="remove_upcoming('{}')">remove</button>"""
 
 categorydroptemp = """<option value="{}">{}</option>"""
+
+classdroptemp1 = """$("#sel1").change(function () {{
+  console.log("gu");
+    $('#sel2').html('');
+    {}
+    }});"""
+
+classdroptemp2 = """$("#sel12").change(function () {{
+    $('#sel22').html('');
+    {}
+    }});"""
+
+valuetemp1 = """$('#sel2').append('<option value="{}">{}</option>');"""
+valuetemp2 = """$('#sel22').append('<option value="{}">{}</option>');"""
+firstif1 = """if($('#sel1').val()=="{}"){{
+{}
+}}"""
+firstif2 = """if($('#sel12').val()=="{}"){{
+{}
+}}"""

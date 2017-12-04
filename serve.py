@@ -146,7 +146,6 @@ def login_auth():
             if len(b)==0:
                 continue
             stu.categories[i].append(b["Description"])
-    print(stu.categories)
 
     dic = stu.classgrades
 
@@ -189,9 +188,12 @@ def classes():
     classdropdown = ""
     counter = 1
     c_missing = 1
+    scripttoput = ""
+    scripttoput2 = ""
     #Iterate through each class
     for num in order:
         missing = []
+        #add hypothetical classes
         info = copy.deepcopy(dic[classmap[num]])
         for i in stu.hypclasses:
             if classmap[num] == i[0]:
@@ -221,25 +223,23 @@ def classes():
             possible.append(a["Possible"])
 
             
-
+            #if assignment is missing
             if a["Points"] == "Z" or a["Points"] == "0.0":
                 missing.append([classmap[num], a["Description"], a["AssignmentType"], a["DueDate"].split(" ")[0], a["Points"], a["Possible"]])
 
             #calc grade stuff
-            #weight = re.findall("\((.*)\)", a["AssignmentType"])[0]
-            #print (weight)
             key = a["AssignmentType"]
             if key not in weights.keys():
                 weights[key] = [(a["Points"], a["Possible"])]
             else:
                 weights[key].append((a["Points"], a["Possible"]))
         rowstoput = ""
+        #create each row of assignments
         for i in range(len(names)):
-            #Print assignment
-            #names, category, date, points, possible points
             rowstoput += row.format(names[i], category[i], duedate[i], points[i], possible[i])
         catstoput = ""
         done = {}
+        #creates the grades in each category table
         for i in category:
             if i in done:
                 continue
@@ -265,15 +265,25 @@ def classes():
         toprint = classtemplate.format(cats=catstoput, head=classname, rows=rowstoput, grade=calculate_grade(weights), id=num, classnametable=(classname.replace(" ", "") + "table"), classnamegrade=(classname.replace(" ", "") + "grade"))
         gradestoput += toprint
         rowstoput = ""
+        #create missing assignments table
         for i in missing:
             rowstoput = row2.format(i[2], i[3], i[4], i[5])
             toprint = classtemplate2.format(head=i[1], rows=rowstoput, grade=classname, id=str(c_missing))
             missingtoput += toprint
             c_missing += 1
         
-        #dynamically generate classes dropdown
+        #dynamically generate classes drop down
         classdropdown += '<option value="{}">{}</option>'.format(classname, classname)
         counter += 1
+
+        #dynamically generate category dropdown
+        values1 = ""
+        values2 = ""
+        for i in stu.categories[classname]:
+            values1 += valuetemp1.format(i, i) + "\n"
+            values2 += valuetemp2.format(i, i) + "\n"
+        scripttoput += firstif1.format(classname, values1) + "\n"
+        scripttoput2 += firstif2.format(classname, values2) + "\n"
 
 
     if os.path.exists('data/'+str(stu.studentnum) + ".json"):
@@ -297,15 +307,22 @@ def classes():
                 upcomingtoput += classtemplate3.format(head=data[0] + " | " + data[1], rows=temp, grade="Priority: " + str(ret[0]), id=i, message=ret[1])
             except Exception as e:
                 print(e)
-    catdropdowntoput = ""
-    alreadydone = []
-    for i in stu.categories.keys():
-        for b in stu.categories[i]:
-            if b not in alreadydone:
-                catdropdowntoput += categorydroptemp.format(b, b)
-                alreadydone.append(b)
-        
-    return flask.render_template("main.html", categorydrop=catdropdowntoput, grub=stu.grubmsg, classesdrop=classdropdown, missingwork=missingtoput, grades=gradestoput, studentid=stu.studentnum, upcomingwork=upcomingtoput)
+    
+
+
+    finalscripttoput = classdroptemp1.format(scripttoput) + "\n" + classdroptemp2.format(scripttoput2)
+
+    #get first class dropdown
+    classname = classmap[order[0]]
+    initialcattoput = ""
+    print("SDILHFSUDKhFSUDKHFSF")
+    print(classname)
+    for i in stu.categories[classname]:
+        initialcattoput += categorydroptemp.format(i, i) + "\n"
+    print(initialcattoput)
+
+
+    return flask.render_template("main.html", initialcat=initialcattoput, dropdownscript=finalscripttoput, grub=stu.grubmsg, classesdrop=classdropdown, missingwork=missingtoput, grades=gradestoput, studentid=stu.studentnum, upcomingwork=upcomingtoput)
 
 def create_grub(classname):
     stu = session['stu']

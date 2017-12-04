@@ -4,6 +4,8 @@
 <head>
     <script src="{{ url_for('static', filename='js/jquery-3.2.1.min.js') }}"></script>
     <script>
+
+
         function remove_assignment(toremove) {
             $.post("/class", {
                 id: toremove,
@@ -170,7 +172,7 @@
                         <div class="md-form pb-2">
 
                             <select class="form-control" id="sel2" style="display:block!important" name="category">
-                                {{categorydrop|safe}}
+                                {{initialcat|safe}}
                             </select>
                             <label for="sel2" class="active py-2">Category</label>
                         </div>
@@ -254,7 +256,7 @@
                         <div class="md-form pb-2">
 
                             <select class="form-control" id="sel22" style="display:block!important" name="category2">
-                                {{categorydrop|safe}}
+                                {{initialcat|safe}}
                             </select>
                             <label for="sel22" class="active py-2">Category</label>
                         </div>
@@ -322,6 +324,10 @@
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+
+    <script>
+        {{dropdownscript|safe}}
+    </script>
 
 </body>
 
