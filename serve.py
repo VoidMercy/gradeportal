@@ -2,7 +2,7 @@ from flask import Flask, url_for, redirect, session
 from flask_session import Session
 
 import requests, json, copy, dateparser, datetime, math
-from html import escape
+from html import escape, unescape
 from lxml import html
 import hmac, base64, hashlib
 import re, flask
@@ -162,7 +162,6 @@ def login_auth():
                 pass
         
         classmap[period] = a
-    print (classmap)
     order = list(classmap.keys())
     order.sort()
     session['stu'] = stu
@@ -196,7 +195,7 @@ def classes():
         #add hypothetical classes
         info = copy.deepcopy(dic[classmap[num]])
         for i in stu.hypclasses:
-            if classmap[num] == i[0]:
+            if classmap[num] == escape(i[0]):
                 info.append(i[1])
         names = []
         category = []
@@ -237,12 +236,14 @@ def classes():
         #create each row of assignments
         for i in range(len(names)):
             rowstoput += row.format(names[i], category[i], duedate[i], points[i], possible[i])
+        print(rowstoput)
         catstoput = ""
-        done = {}
+        done = []
         #creates the grades in each category table
         for i in category:
             if i in done:
                 continue
+            done.append(i)
             grades = weights[i]
             numerator = 0.0
             denom = 0.0
@@ -257,12 +258,12 @@ def classes():
             
             
             if denom == 0.0:
-                done[i] = ["NG", numerator, denom]
                 catstoput += row2.format(i, i.split("(")[1].split(")")[0], str(numerator) + "/" + str(denom), "NG")
             else:
-                done[i] = [(round(numerator / denom), 4) * 100, numerator, denom]
                 catstoput += row2.format(i, i.split("(")[1].split(")")[0], str(numerator) + "/" + str(denom),  str(round(numerator / denom, 4) * 100) + "%")
-        toprint = classtemplate.format(cats=catstoput, head=classname, rows=rowstoput, grade=calculate_grade(weights), id=num, classnametable=(classname.replace(" ", "") + "table"), classnamegrade=(classname.replace(" ", "") + "grade"))
+        #hash the class name as the id
+        tmp = hashlib.sha256(classname.encode('utf-8')).hexdigest()
+        toprint = classtemplate.format(cats=catstoput, head=classname, rows=rowstoput, grade=calculate_grade(weights), id=tmp, classnametable=(classname.replace(" ", "") + "table"), classnamegrade=(classname.replace(" ", "") + "grade"))
         gradestoput += toprint
         rowstoput = ""
         #create missing assignments table
@@ -282,8 +283,8 @@ def classes():
         for i in stu.categories[classname]:
             values1 += valuetemp1.format(i, i) + "\n"
             values2 += valuetemp2.format(i, i) + "\n"
-        scripttoput += firstif1.format(classname, values1) + "\n"
-        scripttoput2 += firstif2.format(classname, values2) + "\n"
+        scripttoput += firstif1.format(unescape(classname), values1) + "\n"
+        scripttoput2 += firstif2.format(unescape(classname), values2) + "\n"
 
 
     if os.path.exists('data/'+str(stu.studentnum) + ".json"):
@@ -315,11 +316,8 @@ def classes():
     #get first class dropdown
     classname = classmap[order[0]]
     initialcattoput = ""
-    print("SDILHFSUDKhFSUDKHFSF")
-    print(classname)
     for i in stu.categories[classname]:
         initialcattoput += categorydroptemp.format(i, i) + "\n"
-    print(initialcattoput)
 
 
     return flask.render_template("main.html", initialcat=initialcattoput, dropdownscript=finalscripttoput, grub=stu.grubmsg, classesdrop=classdropdown, missingwork=missingtoput, grades=gradestoput, studentid=stu.studentnum, upcomingwork=upcomingtoput)
@@ -368,8 +366,6 @@ def create_grub(classname):
                     bestassignment = a["Description"]
     else:
         return "You do not have enough grades to Grade Grub."
-    print(bestgrade)
-    print(bestassignment)
     tname = ""
     studentname = ""
     email= ""
@@ -380,9 +376,6 @@ def create_grub(classname):
             studentname = " ".join(i["student"].split(", ")[::-1])
             email = i["email_addr"]
             break
-    print(tname)
-    
-    print(studentname)
     def calcletter(n):
         if n>=89.5:
             return 'an A'
@@ -401,7 +394,6 @@ def create_grub(classname):
     " As you know, this grade is only %s percent away from %s. I was wondering if it would be possible for you to bump up my grade? "%(round(away,2), calcletter(math.ceil(currentgrade/10.0)*10.0))
     r += "I have been demonstrating high amounts of effort in your class, which can be seen in how I got %s on the '%s' assignment. I would really appreciate it if you could consider this.\n\n"%(calcletter(bestgrade), bestassignment)
     r += "Thanks, and have a great day!\n%s</textarea></div></div>"%(studentname)
-    print(r)
     return r
 
 def calc_prio(data):
@@ -546,7 +538,6 @@ def calculate_grade(weights):
     classmap = session['classmap']
     order = session['order']
     dic = session['dic']
-    #print(weights)
     final_grade = 0.0
     total_weight = 0.0
     for a in weights.keys():
@@ -566,7 +557,6 @@ def calculate_grade(weights):
             total_weight += weight
     if total_weight == 0:
         return "0.0%"
-    #print(str(final_grade / (total_weight / 100)))
     return str(round(final_grade / (total_weight / 100.0), 2)) + "%"
 
 @app.route('/class', methods=['POST'])
@@ -617,11 +607,8 @@ def post_handler():
         info = {"hyp" : ("remove" + str(len(stu.hypclasses))), "Description":data["title2"], "AssignmentType":data["category2"], "DueDate":(str(data["date2"])+" 00:00:00.0"), "Points":str(float(data["points2"])), "Possible":data["possible2"]}
         stu.hypclasses.append((data["classname2"], info))
         
-        #print(data)
     elif "classnamememe" in data:
         stu.grubmsg = create_grub(data['classnamememe'])
-        print("SDFDSFDSF")
-        print(stu.grubmsg)
     return classes()
 
 @app.route('/logout')
