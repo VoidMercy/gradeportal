@@ -237,12 +237,10 @@ def classes():
             rowstoput += row.format(names[i], category[i], duedate[i], points[i], possible[i])
         print(rowstoput)
         catstoput = ""
-        done = []
         #creates the grades in each category table
-        for i in category:
-            if i in done:
-                continue
-            done.append(i)
+        for i in stu.categories[classname]:
+            if i not in weights:
+                weights[i] = []
             grades = weights[i]
             numerator = 0.0
             denom = 0.0
