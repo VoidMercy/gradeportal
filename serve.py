@@ -254,12 +254,14 @@ def classes():
                 else:
                     numerator += float(b[0])
                     denom += float(b[1])
-            
+            weight = "0"
+            if "(" in i and ")" in i:
+                weight = i.split("(")[1].split(")")[0]
             
             if denom == 0.0:
-                catstoput += row2.format(i, i.split("(")[1].split(")")[0], str(numerator) + "/" + str(denom), "NG")
+                catstoput += row2.format(i, weight, str(numerator) + "/" + str(denom), "NG")
             else:
-                catstoput += row2.format(i, i.split("(")[1].split(")")[0], str(numerator) + "/" + str(denom),  str(round(numerator / denom, 4) * 100) + "%")
+                catstoput += row2.format(i, weight, str(numerator) + "/" + str(denom),  str(round(numerator / denom, 4) * 100) + "%")
         #hash the class name as the id
         tmp = hashlib.sha256(classname.encode('utf-8')).hexdigest()
         toprint = classtemplate.format(cats=catstoput, head=classname, rows=rowstoput, grade=calculate_grade(weights), id=tmp, classnametable=(classname.replace(" ", "") + "table"), classnamegrade=(classname.replace(" ", "") + "grade"))
@@ -540,6 +542,8 @@ def calculate_grade(weights):
     final_grade = 0.0
     total_weight = 0.0
     for a in weights.keys():
+        if "(" not in a and ")" not in a:
+            continue
         weight = float(re.findall("\((.*)\)", a)[0])
         numerator = 0.0
         denominator = 0.0
