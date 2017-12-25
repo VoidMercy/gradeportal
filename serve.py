@@ -618,4 +618,4 @@ def logout_handler():
     return redirect(url_for('login_auth'))
 
 if __name__ == '__main__':
-    app.run()
+    app.run(threaded=True)
